@@ -28,7 +28,9 @@ if __name__ == "__main__":
 
     # reading data
     df_raw = load_google_stock_price("data/Google_Stock_Price_Train.csv")
+    df_raw = df_raw.assign(close=np.where(df_raw.close > df_raw.high, df_raw.close / 2, df_raw.close))
     df_test_raw = load_google_stock_price("data/Google_Stock_Price_Test.csv")
+
     features = ["open", "high", "low", "close", "volume"]
     targets = features[:-1]
     validation_ratio = 0.15
@@ -46,13 +48,13 @@ if __name__ == "__main__":
         df_test_concat = pd.concat((df_raw[-params["look_back_days"] :], df_test_raw)).reset_index(drop=True)
         df_test = pd.DataFrame(index=df_test_concat.index)
         for feature in features:
-            df[feature] = rolling_window(df_raw[feature], params["look_back_days"])
-            df_test[feature] = rolling_window(df_test_concat[feature], params["look_back_days"])
+            df[feature] = rolling_window(df_raw[feature], -params["look_back_days"])
+            df_test[feature] = rolling_window(df_test_concat[feature], -params["look_back_days"])
 
         # simulate target to drop na
-        df = df.assign(target=rolling_window(df_raw.close.shift(1).dropna(), -params["predict_days"])).dropna()
+        df = df.assign(target=rolling_window(df_raw.close.shift(-1).dropna(), params["predict_days"])).dropna()
         df_test = df_test.assign(
-            target=rolling_window(df_test_concat.close.shift(1).dropna(), -params["predict_days"])
+            target=rolling_window(df_test_concat.close.shift(-1).dropna(), params["predict_days"])
         ).dropna()
         dates = df_raw.iloc[df.index].date
         dates_test = df_test_concat.iloc[df_test.index].date

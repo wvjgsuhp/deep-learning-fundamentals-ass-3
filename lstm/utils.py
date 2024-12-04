@@ -94,8 +94,6 @@ def load_google_stock_price(file_path: str) -> pd.DataFrame:
         if dtype == object:
             df[col] = df[col].str.replace(",", "").astype(float)
 
-    df = df.assign(close=np.where(df.close > df.high, df.close / 2, df.close))
-
     return df
 
 
